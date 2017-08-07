@@ -66,9 +66,9 @@ public class VFXController : MonoBehaviour {
     [SerializeField]
     private Light rim2;
     [SerializeField]
-    private float fillIntensity = 1.5f;
+    private float fillIntensity = 2f;
     [SerializeField]
-    private float rimIntensity = 1f;
+    private float rimIntensity = 1.5f;
     [SerializeField]
     private AnimationCurve lightFadeInCurve;
     [SerializeField]
