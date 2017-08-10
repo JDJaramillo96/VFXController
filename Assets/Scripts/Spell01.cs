@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.PostProcessing;
 
-public class VFXController : MonoBehaviour {
+public class Spell01 : MonoBehaviour {
 
     #region Properties
 
@@ -66,6 +66,12 @@ public class VFXController : MonoBehaviour {
     [SerializeField]
     private Light rim2;
     [SerializeField]
+    private Gradient fillGradient;
+    [SerializeField]
+    private Gradient rim1Gradient;
+    [SerializeField]
+    private Gradient rim2Gradient;
+    [SerializeField]
     private float fillIntensity = 2f;
     [SerializeField]
     private float rimIntensity = 1.5f;
@@ -73,6 +79,11 @@ public class VFXController : MonoBehaviour {
     private AnimationCurve lightFadeInCurve;
     [SerializeField]
     private AnimationCurve lightFadeOutCurve;
+
+    //Initial values
+    private Color initialFillColor;
+    private Color initialRim1Color;
+    private Color initialRim2Color;
 
     [Space(10f)] [Header("Decal")]
 
@@ -126,7 +137,7 @@ public class VFXController : MonoBehaviour {
     [SerializeField]
     private AnimationCurve audioFadeOutCurve;
     [SerializeField]
-    private float volume = 0.1f;
+    private float volume = 0.25f;
 
     [Space(10f)] [Header("Others")]
 
@@ -138,7 +149,7 @@ public class VFXController : MonoBehaviour {
     private float anticipationTime = 0f;
     private float actionTime = 0f;
     private float recuperationTime = 0f;
-    private float stateEvaluateTime = 0f;
+    private float stateTime = 0f;
 
     //Times Lengths
     private float anticipationLength;
@@ -185,6 +196,7 @@ public class VFXController : MonoBehaviour {
     private void Setup()
     {
         SetupParticles();
+        SetupLights();
         SetupLengths();
         SetupImageEffects();
         SetupAudio();
@@ -205,6 +217,13 @@ public class VFXController : MonoBehaviour {
         //Body Particles
         bodyParticles_Main = bodyParticles.main;
         bodyParticles_Main.startSize = bodyParticlesSize;
+    }
+
+    private void SetupLights()
+    {
+        initialFillColor = fillGradient.colorKeys[0].color;
+        initialRim1Color = rim1Gradient.colorKeys[0].color;
+        initialRim2Color = rim2Gradient.colorKeys[0].color;
     }
 
     private void SetupLengths()
@@ -291,35 +310,38 @@ public class VFXController : MonoBehaviour {
     {
         Debug.Log("STATE 1");
 
-        stateEvaluateTime = anticipationTime / anticipationLength;
+        stateTime = anticipationTime / anticipationLength;
 
         if (!spellAudio.isPlaying)
             spellAudio.Play();
 
         //Particles Pass
-        bodyParticles_Main.startColor = bodyParticlesGradient.Evaluate(stateEvaluateTime);
+        bodyParticles_Main.startColor = bodyParticlesGradient.Evaluate(stateTime);
 
         //Light Pass
-        fill.intensity = lightFadeInCurve.Evaluate(stateEvaluateTime) * fillIntensity;
-        rim1.intensity = lightFadeInCurve.Evaluate(stateEvaluateTime) * rimIntensity;
-        rim2.intensity = lightFadeInCurve.Evaluate(stateEvaluateTime) * rimIntensity;
+        fill.color = fillGradient.Evaluate(stateTime);
+        rim1.color = rim1Gradient.Evaluate(stateTime);
+        rim2.color = rim2Gradient.Evaluate(stateTime);
+        fill.intensity = lightFadeInCurve.Evaluate(stateTime) * fillIntensity;
+        rim1.intensity = lightFadeInCurve.Evaluate(stateTime) * rimIntensity;
+        rim2.intensity = lightFadeInCurve.Evaluate(stateTime) * rimIntensity;
 
         //Decal Pass
         newScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
         decal.transform.localScale = Vector3.one * newScale;
 
         //Image Effects Pass
-        motionBlurModel.frameBlending = effectsFadeInCurve.Evaluate(stateEvaluateTime) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
-        bloomModel.bloom.intensity = effectsFadeInCurve.Evaluate(stateEvaluateTime) * bloomIntensity + initialBloomIntensity;
-        bloomModel.bloom.threshold = inverseFadeInCurve.Evaluate(stateEvaluateTime) * initialBloomThreshold;
-        vignetteModel.intensity = inverseFadeInCurve.Evaluate(stateEvaluateTime) * initialVignetteIntensity;
+        motionBlurModel.frameBlending = effectsFadeInCurve.Evaluate(stateTime) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
+        bloomModel.bloom.intensity = effectsFadeInCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity;
+        bloomModel.bloom.threshold = inverseFadeInCurve.Evaluate(stateTime) * initialBloomThreshold;
+        vignetteModel.intensity = inverseFadeInCurve.Evaluate(stateTime) * initialVignetteIntensity;
 
         profile.motionBlur.settings = motionBlurModel;
         profile.bloom.settings = bloomModel;
         profile.vignette.settings = vignetteModel;
 
         //Audio Pass
-        spellAudio.volume = audioFadeInCurve.Evaluate(stateEvaluateTime) * volume;
+        spellAudio.volume = audioFadeInCurve.Evaluate(stateTime) * volume;
 
         IncreaseTime();
     }
@@ -328,13 +350,13 @@ public class VFXController : MonoBehaviour {
     {
         Debug.Log("STATE 2");
 
-        stateEvaluateTime = actionTime / actionLength;
+        stateTime = actionTime / actionLength;
 
         //Particles Pass
         if (!mainParticles.gameObject.activeInHierarchy)
             mainParticles.gameObject.SetActive(true);
 
-        mainParticles_Main.simulationSpeed = mainParticlesSimulationSpeedCurve.Evaluate(stateEvaluateTime) * scaledSpeed;
+        mainParticles_Main.simulationSpeed = mainParticlesSimulationSpeedCurve.Evaluate(stateTime) * scaledSpeed;
 
         //Decal Pass
         newScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
@@ -347,32 +369,35 @@ public class VFXController : MonoBehaviour {
     {
         Debug.Log("STATE 3");
 
-        stateEvaluateTime = recuperationTime / recuperationLength;
+        stateTime = recuperationTime / recuperationLength;
 
         //Particles Pass
-        bodyParticles_Main.startColor = bodyParticlesGradient.Evaluate(1 - stateEvaluateTime);
+        bodyParticles_Main.startColor = bodyParticlesGradient.Evaluate(1 - stateTime);
 
         //Light Pass
-        fill.intensity = lightFadeOutCurve.Evaluate(stateEvaluateTime) * fillIntensity;
-        rim1.intensity = lightFadeOutCurve.Evaluate(stateEvaluateTime) * rimIntensity;
-        rim2.intensity = lightFadeOutCurve.Evaluate(stateEvaluateTime) * rimIntensity;
+        fill.color = fillGradient.Evaluate(1 - stateTime);
+        rim1.color = rim1Gradient.Evaluate(1 - stateTime);
+        rim2.color = rim2Gradient.Evaluate(1 - stateTime);
+        fill.intensity = lightFadeOutCurve.Evaluate(stateTime) * fillIntensity;
+        rim1.intensity = lightFadeOutCurve.Evaluate(stateTime) * rimIntensity;
+        rim2.intensity = lightFadeOutCurve.Evaluate(stateTime) * rimIntensity;
 
         //Decal Pass
-        newScale = decalFadeOutCurve.Evaluate(stateEvaluateTime) * decalMaxSize;
+        newScale = decalFadeOutCurve.Evaluate(stateTime) * decalMaxSize;
         decal.transform.localScale = Vector3.one * newScale;
 
         //Image Effects Pass
         motionBlurModel.frameBlending = effectsFadeOutCurve.Evaluate(recuperationTime / (recuperationLength - frameBlendingDelta)) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
-        bloomModel.bloom.intensity = effectsFadeOutCurve.Evaluate(stateEvaluateTime) * bloomIntensity + initialBloomIntensity;
-        bloomModel.bloom.threshold = inverseFadeOutCurve.Evaluate(stateEvaluateTime) * initialBloomThreshold;
-        vignetteModel.intensity = inverseFadeOutCurve.Evaluate(stateEvaluateTime) * initialVignetteIntensity;
+        bloomModel.bloom.intensity = effectsFadeOutCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity;
+        bloomModel.bloom.threshold = inverseFadeOutCurve.Evaluate(stateTime) * initialBloomThreshold;
+        vignetteModel.intensity = inverseFadeOutCurve.Evaluate(stateTime) * initialVignetteIntensity;
 
         profile.motionBlur.settings = motionBlurModel;
         profile.bloom.settings = bloomModel;
         profile.vignette.settings = vignetteModel;
 
         //Audio Pass
-        spellAudio.volume = audioFadeOutCurve.Evaluate(stateEvaluateTime) * volume;
+        spellAudio.volume = audioFadeOutCurve.Evaluate(stateTime) * volume;
 
         IncreaseTime();
     }
@@ -389,13 +414,16 @@ public class VFXController : MonoBehaviour {
         anticipationTime = 0f;
         actionTime = 0f;
         recuperationTime = 0f;
-        stateEvaluateTime = 0f;
+        stateTime = 0f;
 
         //Particles
         mainParticles_Main.simulationSpeed = 0f;
         mainParticles.gameObject.SetActive(false);
 
         //Lighting
+        fill.color = initialFillColor;
+        rim1.color = initialRim1Color;
+        rim2.color = initialRim2Color;
         fill.intensity = 0f;
         rim1.intensity = 0f;
         rim2.intensity = 0f;
