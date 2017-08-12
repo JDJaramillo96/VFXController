@@ -1,34 +1,34 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.PostProcessing;
 
 public abstract class Spell : MonoBehaviour {
 
     #region Properties
 
     [SerializeField]
+    protected float globalLength;
+
+    [Space(10f)] [Header("Animator Settings")]
+
+    [SerializeField]
     protected Animator animator;
     [SerializeField]
     protected string animationTriggerName;
 
-    [Space(10f)]
-    [Header("States")]
+    [Space(10f)] [Header("States")]
+
+    [SerializeField] [Range(0, 1)]
+    protected float anticipationPercentage;
+    [SerializeField] [Range(0, 1)]
+    protected float actionPercentage;
+    [SerializeField] [Range(0, 1)]
+    protected float recuperationPercentage;
+
+    [Space(10f)] [Header("PostProcessing Profile")]
 
     [SerializeField]
-    [Range(0, 1)]
-    protected float anticipationPercentage = 0.2f;
-    [SerializeField]
-    [Range(0, 1)]
-    protected float actionPercentage = 0.25f;
-    [SerializeField]
-    [Range(0, 1)]
-    protected float recuperationPercentage = 0.55f;
-
-    [Space(10f)]
-    [Header("Others")]
-
-    [SerializeField]
-    private float globalLength = 2.25f;
+    protected PostProcessingProfile profile;
 
     //Times
     protected float globalTime = 0f;
@@ -46,10 +46,6 @@ public abstract class Spell : MonoBehaviour {
     protected float lengthUntilRecuperation;
 
     //Cached Components
-    protected float initialSpeed;
-    protected float scaledSpeed;
-    protected float scaledAcceleration;
-    protected float newScale;
     protected IEnumerator spellCoroutine;
 
     //Hidden
@@ -58,13 +54,15 @@ public abstract class Spell : MonoBehaviour {
     [HideInInspector]
     public bool isSpellRuning = false;
 
+    protected float clipLength;
+
     #endregion
 
     #region Unity Functions
 
     protected void Awake()
     {
-        if (anticipationPercentage + actionPercentage + recuperationPercentage != 1)
+        if (Mathf.Approximately(anticipationPercentage + actionPercentage + recuperationPercentage, 1))
             Debug.LogWarning("The sum of percentages is not equal to 1");
 
         Setup();
@@ -78,9 +76,9 @@ public abstract class Spell : MonoBehaviour {
     {
         SetupLengths();
         SetupParticles();
-        SetupLights();
-        SetupDecals();
-        SetupImageEffects();
+        SetupLighting();
+        SetupDecal();
+        SetupEffects();
         SetupAudio();
         SetupOthers();
     }
@@ -103,17 +101,17 @@ public abstract class Spell : MonoBehaviour {
         //SetupParticles
     }
 
-    protected virtual void SetupLights()
+    protected virtual void SetupLighting()
     {
         //SetupLights
     }
 
-    protected virtual void SetupDecals()
+    protected virtual void SetupDecal()
     {
         //SetupDecals
     }
 
-    protected virtual void SetupImageEffects()
+    protected virtual void SetupEffects()
     {
         //SetupImageEffects
     }
@@ -147,15 +145,11 @@ public abstract class Spell : MonoBehaviour {
 
     protected virtual void SetupSpell()
     {
-        animator.SetTrigger("spell1");
+        isSpellRuning = true;
 
-        //Coroutine Setup
-        if (spellCoroutine != null)
-            StopCoroutine(spellCoroutine);
-
-        spellCoroutine = SpellCoroutine();
-
-        StartCoroutine(spellCoroutine);
+        //Animator
+        animator.speed = clipLength / globalLength;
+        state = 1;
     }
 
     protected virtual void SpellState1()
@@ -183,6 +177,7 @@ public abstract class Spell : MonoBehaviour {
     {
         isSpellRuning = false;
 
+        //Animator
         animator.speed = 1f;
         state = 0;
 
@@ -194,7 +189,7 @@ public abstract class Spell : MonoBehaviour {
         stateTime = 0f;
     }
 
-    protected void IncreaseTime()
+    protected virtual void IncreaseTime()
     {
         globalTime += Time.deltaTime;
 
@@ -215,8 +210,6 @@ public abstract class Spell : MonoBehaviour {
             default:
                 break;
         }
-
-        scaledSpeed += scaledAcceleration;
     }
 
     protected bool EvaluateState(float stateTime, float stateLength)

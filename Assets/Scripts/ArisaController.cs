@@ -8,8 +8,6 @@ public class ArisaController : MonoBehaviour {
     private Animator animator;
     [SerializeField]
     private Spell01 spell1;
-    //[SerializeField]
-    //private Spell02 spell2;
 
     #endregion
 
@@ -40,10 +38,7 @@ public class ArisaController : MonoBehaviour {
         }
         else if (Input.GetKeyUp(KeyCode.Alpha2))
         {
-            //if (!spell2.isSpellRuning)
-            //{
-            //    spell2.ExecuteSpell();
-            //}
+            animator.SetTrigger("spell2");
         }
         else if (Input.GetKeyUp(KeyCode.Alpha3))
         {

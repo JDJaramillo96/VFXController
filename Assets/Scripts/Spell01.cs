@@ -2,26 +2,14 @@
 using UnityEngine;
 using UnityEngine.PostProcessing;
 
-public class Spell01 : MonoBehaviour {
+public class Spell01 : Spell {
 
     #region Properties
-
-    [SerializeField]
-    private Animator animator;
 
     [Space(10f)] [Header("Spell Settings")]
 
     [SerializeField]
     private GameObject spellSystem;
-
-    [Space(10f)] [Header("States")]
-
-    [SerializeField] [Range(0,1)]
-    private float anticipationPercentage = 0.2f;
-    [SerializeField] [Range(0,1)]
-    private float actionPercentage = 0.25f;
-    [SerializeField] [Range(0,1)]
-    private float recuperationPercentage = 0.55f;
 
     [Space(10f)] [Header("Main Particles Settings")]
 
@@ -85,7 +73,7 @@ public class Spell01 : MonoBehaviour {
     private Color initialRim1Color;
     private Color initialRim2Color;
 
-    [Space(10f)] [Header("Decal")]
+    [Space(10f)] [Header("Decal Settings")]
 
     [SerializeField]
     private GameObject decal;
@@ -96,10 +84,8 @@ public class Spell01 : MonoBehaviour {
     [SerializeField]
     private float decalMaxSize = 5f;
 
-    [Space(10f)] [Header("Image Effects")]
+    [Space(10f)] [Header("Effects Settings")]
 
-    [SerializeField]
-    private PostProcessingProfile profile;
     [SerializeField]
     private float motionBlurFrameBlending = 0.8f;
     [SerializeField]
@@ -128,7 +114,7 @@ public class Spell01 : MonoBehaviour {
     private BloomModel.Settings bloomModel;
     private VignetteModel.Settings vignetteModel;
 
-    [Space(10f)] [Header("Audio")]
+    [Space(10f)] [Header("Audio Settings")]
 
     [SerializeField]
     private AudioSource spellAudio;
@@ -139,50 +125,15 @@ public class Spell01 : MonoBehaviour {
     [SerializeField]
     private float volume = 0.25f;
 
-    [Space(10f)] [Header("Others")]
-
-    [SerializeField]
-    private float globalLength = 2.25f;
-
-    //Times
-    private float globalTime = 0f;
-    private float anticipationTime = 0f;
-    private float actionTime = 0f;
-    private float recuperationTime = 0f;
-    private float stateTime = 0f;
-
-    //Times Lengths
-    private float anticipationLength;
-    private float actionLength;
-    private float recuperationLength;
-    private float lengthUntilAction;
-    private float lengthUntilHalfOfAction;
-    private float lengthUntilRecuperation;
-
-    //Cached Components
+    //Speed Settings
     private float initialSpeed;
     private float scaledSpeed;
     private float scaledAcceleration;
     private float newScale;
-    private IEnumerator spellCoroutine;
-
-    //Readonly
-    private readonly float clipLength = 2.267f;
-
-    //Hidden
-    [HideInInspector]
-    public int state = 0;
-    [HideInInspector]
-    public bool isSpellRuning = false;
 
     #endregion
 
     #region Unity Functions
-
-    private void Awake()
-    {
-        Setup();
-    }
 
     private void OnDisable()
     {
@@ -193,17 +144,14 @@ public class Spell01 : MonoBehaviour {
 
     #region Class Functions
 
-    private void Setup()
+    protected override void SetupLengths()
     {
-        SetupParticles();
-        SetupLights();
-        SetupLengths();
-        SetupImageEffects();
-        SetupAudio();
-        SetupOthers();
+        base.SetupLengths();
+
+        clipLength = 2.267f;
     }
 
-    private void SetupParticles()
+    protected override void SetupParticles()
     {
         //Main Particles
         mainParticles_Main = mainParticles.main;
@@ -219,27 +167,14 @@ public class Spell01 : MonoBehaviour {
         bodyParticles_Main.startSize = bodyParticlesSize;
     }
 
-    private void SetupLights()
+    protected override void SetupLighting()
     {
         initialFillColor = fillGradient.colorKeys[0].color;
         initialRim1Color = rim1Gradient.colorKeys[0].color;
         initialRim2Color = rim2Gradient.colorKeys[0].color;
     }
 
-    private void SetupLengths()
-    {
-        //States Length
-        anticipationLength = (globalLength * anticipationPercentage);
-        actionLength = (globalLength * actionPercentage);
-        recuperationLength = (globalLength * recuperationPercentage);
-
-        //Lengths Until
-        lengthUntilAction = anticipationLength + actionLength;
-        lengthUntilHalfOfAction = anticipationLength + (actionLength / 2);
-        lengthUntilRecuperation = lengthUntilAction + recuperationLength;
-    }
-
-    private void SetupImageEffects()
+    protected override void SetupEffects()
     {
         //Model Settings
         motionBlurModel = profile.motionBlur.settings;
@@ -253,12 +188,12 @@ public class Spell01 : MonoBehaviour {
         bloomIntensity -= initialBloomIntensity;
     }
 
-    private void SetupAudio()
+    protected override void SetupAudio()
     {
         spellAudio.pitch = spellAudio.clip.length / globalLength;
     }
 
-    private void SetupOthers()
+    protected override void SetupOthers()
     {
         scaledSpeed = mainParticlesSpeed * (clipLength / globalLength);
         scaledAcceleration = mainParticlesAcceleration * (clipLength / globalLength);
@@ -283,42 +218,24 @@ public class Spell01 : MonoBehaviour {
 
     #region Spell Functions
 
-    public void ExecuteSpell()
+    protected override void SetupSpell()
     {
-        animator.SetTrigger("spell1");
-
-        //Coroutine Setup
-        if (spellCoroutine != null)
-            StopCoroutine(spellCoroutine);
-
-        spellCoroutine = SpellCoroutine();
-
-        StartCoroutine(spellCoroutine);
-    }
-
-    private void SetupSpell()
-    {
-        isSpellRuning = true;
-
-        animator.speed = clipLength / globalLength;
-        state = 1;
+        base.SetupSpell();
 
         spellSystem.SetActive(true);
-    }
-
-    private void SpellState1()
-    {
-        Debug.Log("STATE 1");
-
-        stateTime = anticipationTime / anticipationLength;
 
         if (!spellAudio.isPlaying)
             spellAudio.Play();
+    }
+
+    protected override void SpellState1()
+    {
+        base.SpellState1();
 
         //Particles Pass
         bodyParticles_Main.startColor = bodyParticlesGradient.Evaluate(stateTime);
 
-        //Light Pass
+        //Lighting Pass
         fill.color = fillGradient.Evaluate(stateTime);
         rim1.color = rim1Gradient.Evaluate(stateTime);
         rim2.color = rim2Gradient.Evaluate(stateTime);
@@ -330,7 +247,7 @@ public class Spell01 : MonoBehaviour {
         newScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
         decal.transform.localScale = Vector3.one * newScale;
 
-        //Image Effects Pass
+        //Effects Pass
         motionBlurModel.frameBlending = effectsFadeInCurve.Evaluate(stateTime) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
         bloomModel.bloom.intensity = effectsFadeInCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity;
         bloomModel.bloom.threshold = inverseFadeInCurve.Evaluate(stateTime) * initialBloomThreshold;
@@ -343,14 +260,13 @@ public class Spell01 : MonoBehaviour {
         //Audio Pass
         spellAudio.volume = audioFadeInCurve.Evaluate(stateTime) * volume;
 
+        //Others
         IncreaseTime();
     }
 
-    private void SpellState2()
+    protected override void SpellState2()
     {
-        Debug.Log("STATE 2");
-
-        stateTime = actionTime / actionLength;
+        base.SpellState2();
 
         //Particles Pass
         if (!mainParticles.gameObject.activeInHierarchy)
@@ -362,22 +278,22 @@ public class Spell01 : MonoBehaviour {
         newScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
         decal.transform.localScale = Vector3.one * newScale;
 
+        //Others
         IncreaseTime();
     }
 
-    private void SpellState3()
+    protected override void SpellState3()
     {
-        Debug.Log("STATE 3");
-
-        stateTime = recuperationTime / recuperationLength;
+        base.SpellState3();
 
         //Particles Pass
         bodyParticles_Main.startColor = bodyParticlesGradient.Evaluate(1 - stateTime);
 
-        //Light Pass
+        //Lighting Pass
         fill.color = fillGradient.Evaluate(1 - stateTime);
         rim1.color = rim1Gradient.Evaluate(1 - stateTime);
         rim2.color = rim2Gradient.Evaluate(1 - stateTime);
+
         fill.intensity = lightFadeOutCurve.Evaluate(stateTime) * fillIntensity;
         rim1.intensity = lightFadeOutCurve.Evaluate(stateTime) * rimIntensity;
         rim2.intensity = lightFadeOutCurve.Evaluate(stateTime) * rimIntensity;
@@ -386,7 +302,7 @@ public class Spell01 : MonoBehaviour {
         newScale = decalFadeOutCurve.Evaluate(stateTime) * decalMaxSize;
         decal.transform.localScale = Vector3.one * newScale;
 
-        //Image Effects Pass
+        //Effects Pass
         motionBlurModel.frameBlending = effectsFadeOutCurve.Evaluate(recuperationTime / (recuperationLength - frameBlendingDelta)) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
         bloomModel.bloom.intensity = effectsFadeOutCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity;
         bloomModel.bloom.threshold = inverseFadeOutCurve.Evaluate(stateTime) * initialBloomThreshold;
@@ -399,22 +315,13 @@ public class Spell01 : MonoBehaviour {
         //Audio Pass
         spellAudio.volume = audioFadeOutCurve.Evaluate(stateTime) * volume;
 
+        //Others
         IncreaseTime();
     }
 
-    private void EndSpell()
+    protected override void EndSpell()
     {
-        isSpellRuning = false;
-
-        animator.speed = 1f;
-        state = 0;
-
-        //Timing
-        globalTime = 0f;
-        anticipationTime = 0f;
-        actionTime = 0f;
-        recuperationTime = 0f;
-        stateTime = 0f;
+        base.EndSpell();
 
         //Particles
         mainParticles_Main.simulationSpeed = 0f;
@@ -431,7 +338,7 @@ public class Spell01 : MonoBehaviour {
         //Decal
         decal.transform.localScale = Vector3.zero;
 
-        //Image Effects
+        //Effects
         EffectsSettings();
 
         //Audio
@@ -443,76 +350,11 @@ public class Spell01 : MonoBehaviour {
         spellSystem.SetActive(false);
     }
 
-    private void IncreaseTime()
+    protected override void IncreaseTime()
     {
-        globalTime += Time.deltaTime;
-
-        switch (state)
-        {
-            case 1:
-                anticipationTime += Time.deltaTime;
-                break;
-
-            case 2:
-                actionTime += Time.deltaTime;
-                break;
-
-            case 3:
-                recuperationTime += Time.deltaTime;
-                break;
-
-            default:
-                break;
-        }
+        base.IncreaseTime();
 
         scaledSpeed += scaledAcceleration;
-    }
-
-    private bool EvaluateState(float stateTime, float stateLength)
-    {
-        if (stateTime < stateLength)
-            return true;
-        else
-            return false;
-    }
-
-    #endregion
-
-    #region Spell Coroutines
-
-    private IEnumerator SpellCoroutine()
-    {
-        SetupSpell();
-
-        while (state == 1)
-        {
-            SpellState1();
-
-            if (!EvaluateState(globalTime, anticipationLength))
-                state = 2;
-
-            yield return null;
-        }
-
-        while (state == 2)
-        {
-            SpellState2();
-
-            if (!EvaluateState(globalTime, lengthUntilAction))
-                state = 3;
-
-            yield return null;
-        }
-
-        while (state == 3)
-        {
-            SpellState3();
-
-            if (!EvaluateState(globalTime, lengthUntilRecuperation))
-                EndSpell();
-
-            yield return null;
-        }
     }
 
     #endregion
