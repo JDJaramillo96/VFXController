@@ -6,8 +6,7 @@ public abstract class Spell : MonoBehaviour {
 
     #region Properties
 
-    [SerializeField]
-    protected float globalLength;
+    public float globalLength;
 
     [Space(10f)] [Header("Animator Settings")]
 
@@ -129,6 +128,13 @@ public abstract class Spell : MonoBehaviour {
     #endregion
 
     #region Spell Functions
+
+    public void SetGlobalLength(float globalLength)
+    {
+        this.globalLength = globalLength;
+
+        Setup();
+    }
 
     public void ExecuteSpell()
     {
