@@ -1,35 +1,28 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.PostProcessing;
 
-public class Spell01 : Spell {
+public class Spell02 : Spell {
 
     #region Properties
 
-    [Space(10f)] [Header("Spell Settings")]
+    [Header("Spell Settings")] [Space(10f)]
 
     [SerializeField]
     private GameObject spellSystem;
 
-    [Space(10f)] [Header("Main Particles Settings")]
+    [Header("Main Particles Settings")] [Space(10f)]
 
     [SerializeField]
     private ParticleSystem mainParticles;
     [SerializeField]
-    private float mainParticlesSize = 0.8f;
-    [SerializeField]
-    private float mainParticlesRadius = 0.8f;
-    [SerializeField]
-    private float mainParticlesSpeed = 4f;
-    [SerializeField]
-    private float mainParticlesAcceleration = 0.025f;
+    private float mainParticlesInitialSimulationSpeed;
     [SerializeField]
     private AnimationCurve mainParticlesSimulationSpeedCurve;
     [SerializeField]
-    private Color mainParticlesColor;
-    [SerializeField]
-    private Gradient mainParticlesColorOverLifeTime;
-    
+    private Gradient mainParticlesGradient;
+
     //Cached Modules
     private ParticleSystem.MainModule mainParticles_Main;
 
@@ -38,14 +31,12 @@ public class Spell01 : Spell {
     [SerializeField]
     private ParticleSystem bodyParticles;
     [SerializeField]
-    private float bodyParticlesSize = 0.25f;
-    [SerializeField]
     private Gradient bodyParticlesGradient;
 
     //Cached Modules
     private ParticleSystem.MainModule bodyParticles_Main;
 
-    [Space(10f)] [Header("Lights")]
+    [Header("Lights")] [Space(10f)]
 
     [SerializeField]
     private Light fill;
@@ -62,7 +53,11 @@ public class Spell01 : Spell {
     [SerializeField]
     private float fillIntensity = 2f;
     [SerializeField]
-    private float rimIntensity = 1.5f;
+    private float rimIntensity = 1.25f;
+    [SerializeField]
+    private float fillRange = 3f;
+    [SerializeField]
+    private float rimRange = 3f;
     [SerializeField]
     private AnimationCurve lightFadeInCurve;
     [SerializeField]
@@ -73,7 +68,7 @@ public class Spell01 : Spell {
     private Color initialRim1Color;
     private Color initialRim2Color;
 
-    [Space(10f)] [Header("Decal Settings")]
+    [Header("Decal Settings")] [Space(10f)]
 
     [SerializeField]
     private GameObject decal;
@@ -82,7 +77,13 @@ public class Spell01 : Spell {
     [SerializeField]
     private AnimationCurve decalFadeOutCurve;
     [SerializeField]
-    private float decalMaxSize = 5f;
+    private float decalMaxSize;
+    [SerializeField]
+    private float rotationVelocity;
+    [SerializeField]
+    private AnimationCurve rotationAcelerationFadeIn;
+    [SerializeField]
+    private AnimationCurve rotationAcelerationFadeOut;
 
     [Space(10f)] [Header("Effects Settings")]
 
@@ -91,28 +92,21 @@ public class Spell01 : Spell {
     [SerializeField]
     private float initialMotionBlurFrameBlending = 0.1f;
     [SerializeField]
-    private float bloomIntensity = 0.6f;
+    private float grainIntensity = 0f;
     [SerializeField]
-    private float initialBloomIntensity = 0.15f;
+    private float initialGrainIntensity = 0f;
     [SerializeField]
-    private float initialBloomThreshold = 1f;
+    private float initialGrainSize = 0f;
+    [SerializeField]
+    private float vignetteIntensity = 0.45f;
     [SerializeField]
     private float initialVignetteIntensity = 0.225f;
     [SerializeField]
     private AnimationCurve effectsFadeInCurve;
     [SerializeField]
-    private AnimationCurve inverseFadeInCurve;
-    [SerializeField]
     private AnimationCurve effectsFadeOutCurve;
-    [SerializeField]
-    private AnimationCurve inverseFadeOutCurve;
-    [SerializeField] [Range(0,1)]
+    [SerializeField] [Range(0, 1)]
     private float frameBlendingDelta = 0.25f;
-
-    //Cached Components
-    private MotionBlurModel.Settings motionBlurModel;
-    private BloomModel.Settings bloomModel;
-    private VignetteModel.Settings vignetteModel;
 
     [Space(10f)] [Header("Audio Settings")]
 
@@ -125,11 +119,13 @@ public class Spell01 : Spell {
     [SerializeField]
     private float volume = 0.25f;
 
-    //Speed Settings
-    private float initialSpeed;
-    private float scaledSpeed;
-    private float scaledAcceleration;
-    private float newScale;
+    //Cached Components
+    private MotionBlurModel.Settings motionBlurModel;
+    private GrainModel.Settings grainModel;
+    private VignetteModel.Settings vignetteModel;
+
+    //Timming Settings
+    private float timeUntilHalfOfAction;
 
     #endregion
 
@@ -139,27 +135,26 @@ public class Spell01 : Spell {
     {
         base.SetupLengths();
 
-        clipLength = 2.267f;
+        clipLength = 2.967f;
     }
 
     protected override void SetupParticles()
     {
         //Main Particles
-        mainParticles_Main = mainParticles.main;
-        mainParticles_Main.startSize = mainParticlesSize;
-        mainParticles_Main.startColor = mainParticlesColor;
-        ParticleSystem.ShapeModule mainParticles_Shape = mainParticles.shape;
-        mainParticles_Shape.radius = mainParticlesRadius;
-        ParticleSystem.ColorOverLifetimeModule mainParticles_ColorOverLifeTime = mainParticles.colorOverLifetime;
-        mainParticles_ColorOverLifeTime.color = mainParticlesColorOverLifeTime;
+        mainParticlesInitialSimulationSpeed *= (clipLength / globalLength);
 
-        //Body Particles
+        mainParticles_Main = mainParticles.main;
+        mainParticles_Main.simulationSpeed = mainParticlesInitialSimulationSpeed;
+
         bodyParticles_Main = bodyParticles.main;
-        bodyParticles_Main.startSize = bodyParticlesSize;
     }
 
     protected override void SetupLighting()
     {
+        fill.range = fillRange;
+        rim1.range = rimRange;
+        rim2.range = rimRange;
+
         initialFillColor = fillGradient.colorKeys[0].color;
         initialRim1Color = rim1Gradient.colorKeys[0].color;
         initialRim2Color = rim2Gradient.colorKeys[0].color;
@@ -167,16 +162,16 @@ public class Spell01 : Spell {
 
     protected override void SetupEffects()
     {
-        //Model Settings
         motionBlurModel = profile.motionBlur.settings;
-        bloomModel = profile.bloom.settings;
+        grainModel = profile.grain.settings;
         vignetteModel = profile.vignette.settings;
 
         EffectsSettings();
 
         //Parameters Compensation
         motionBlurFrameBlending -= initialMotionBlurFrameBlending;
-        bloomIntensity -= initialBloomIntensity;
+        grainIntensity -= initialGrainIntensity;
+        vignetteIntensity -= initialVignetteIntensity;
     }
 
     protected override void SetupAudio()
@@ -184,25 +179,20 @@ public class Spell01 : Spell {
         spellAudio.pitch = spellAudio.clip.length / globalLength;
     }
 
-    protected override void SetupOthers()
-    {
-        scaledSpeed = mainParticlesSpeed * (clipLength / globalLength);
-        scaledAcceleration = mainParticlesAcceleration * (clipLength / globalLength);
-        initialSpeed = scaledSpeed;
-    }
-
     protected override void EffectsSettings()
     {
         //Initial Parameters
         motionBlurModel.frameBlending = initialMotionBlurFrameBlending;
-        bloomModel.bloom.intensity = initialBloomIntensity;
-        bloomModel.bloom.threshold = initialBloomThreshold;
+        grainModel.intensity = initialGrainIntensity;
+        grainModel.size = initialGrainSize;
         vignetteModel.intensity = initialVignetteIntensity;
 
         //PostProcessingProfile Implementation
         profile.motionBlur.settings = motionBlurModel;
-        profile.bloom.settings = bloomModel;
+        profile.grain.settings = grainModel;
         profile.vignette.settings = vignetteModel;
+
+        profile.grain.enabled = false;
     }
 
     #endregion
@@ -223,29 +213,40 @@ public class Spell01 : Spell {
     {
         base.SpellState1();
 
+        timeUntilHalfOfAction = globalTime / lengthUntilHalfOfAction;
+
         //Particles Pass
+        if (!mainParticles.gameObject.activeInHierarchy)
+            mainParticles.gameObject.SetActive(true);
+
+        mainParticles_Main.startColor = mainParticlesGradient.Evaluate(timeUntilHalfOfAction);
+        mainParticles_Main.simulationSpeed = mainParticlesInitialSimulationSpeed + (mainParticlesSimulationSpeedCurve.Evaluate(stateTime));
+
         bodyParticles_Main.startColor = bodyParticlesGradient.Evaluate(stateTime);
 
         //Lighting Pass
         fill.color = fillGradient.Evaluate(stateTime);
         rim1.color = rim1Gradient.Evaluate(stateTime);
         rim2.color = rim2Gradient.Evaluate(stateTime);
+
         fill.intensity = lightFadeInCurve.Evaluate(stateTime) * fillIntensity;
         rim1.intensity = lightFadeInCurve.Evaluate(stateTime) * rimIntensity;
         rim2.intensity = lightFadeInCurve.Evaluate(stateTime) * rimIntensity;
 
         //Decal Pass
-        newScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
-        decal.transform.localScale = Vector3.one * newScale;
+        decal.transform.localScale = Vector3.one * (decalFadeInCurve.Evaluate(timeUntilHalfOfAction) * decalMaxSize);
+        decal.transform.Rotate(Vector3.up * (rotationVelocity * rotationAcelerationFadeIn.Evaluate(timeUntilHalfOfAction) * Time.deltaTime), Space.World);
 
         //Effects Pass
+        if (!profile.grain.enabled)
+            profile.grain.enabled = true;
+
         motionBlurModel.frameBlending = effectsFadeInCurve.Evaluate(stateTime) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
-        bloomModel.bloom.intensity = effectsFadeInCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity;
-        bloomModel.bloom.threshold = inverseFadeInCurve.Evaluate(stateTime) * initialBloomThreshold;
-        vignetteModel.intensity = inverseFadeInCurve.Evaluate(stateTime) * initialVignetteIntensity;
+        grainModel.intensity = effectsFadeInCurve.Evaluate(stateTime) * grainIntensity + initialGrainIntensity;
+        vignetteModel.intensity = effectsFadeInCurve.Evaluate(stateTime) * vignetteIntensity + initialVignetteIntensity;
 
         profile.motionBlur.settings = motionBlurModel;
-        profile.bloom.settings = bloomModel;
+        profile.grain.settings = grainModel;
         profile.vignette.settings = vignetteModel;
 
         //Audio Pass
@@ -259,15 +260,14 @@ public class Spell01 : Spell {
     {
         base.SpellState2();
 
-        //Particles Pass
-        if (!mainParticles.gameObject.activeInHierarchy)
-            mainParticles.gameObject.SetActive(true);
+        timeUntilHalfOfAction = globalTime / lengthUntilHalfOfAction;
 
-        mainParticles_Main.simulationSpeed = mainParticlesSimulationSpeedCurve.Evaluate(stateTime) * scaledSpeed;
+        //Particles Pass
+        mainParticles_Main.startColor = mainParticlesGradient.Evaluate(timeUntilHalfOfAction);
 
         //Decal Pass
-        newScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
-        decal.transform.localScale = Vector3.one * newScale;
+        decal.transform.localScale = Vector3.one * (decalFadeInCurve.Evaluate(timeUntilHalfOfAction) * decalMaxSize);
+        decal.transform.Rotate(Vector3.up * (rotationVelocity * rotationAcelerationFadeIn.Evaluate(timeUntilHalfOfAction) * Time.deltaTime), Space.World);
 
         //Others
         IncreaseTime();
@@ -278,6 +278,7 @@ public class Spell01 : Spell {
         base.SpellState3();
 
         //Particles Pass
+        mainParticles_Main.startColor = mainParticlesGradient.Evaluate(stateTimeComplement);
         bodyParticles_Main.startColor = bodyParticlesGradient.Evaluate(stateTimeComplement);
 
         //Lighting Pass
@@ -290,21 +291,20 @@ public class Spell01 : Spell {
         rim2.intensity = lightFadeOutCurve.Evaluate(stateTime) * rimIntensity;
 
         //Decal Pass
-        newScale = decalFadeOutCurve.Evaluate(stateTime) * decalMaxSize;
-        decal.transform.localScale = Vector3.one * newScale;
+        decal.transform.localScale = Vector3.one * (decalFadeOutCurve.Evaluate(stateTime) * decalMaxSize);
+        decal.transform.Rotate(Vector3.up * (rotationVelocity * rotationAcelerationFadeOut.Evaluate(stateTime) * Time.deltaTime), Space.World);
 
         //Effects Pass
         motionBlurModel.frameBlending = effectsFadeOutCurve.Evaluate(recuperationTime / (recuperationLength - frameBlendingDelta)) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
-        bloomModel.bloom.intensity = effectsFadeOutCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity;
-        bloomModel.bloom.threshold = inverseFadeOutCurve.Evaluate(stateTime) * initialBloomThreshold;
-        vignetteModel.intensity = inverseFadeOutCurve.Evaluate(stateTime) * initialVignetteIntensity;
-
-        profile.motionBlur.settings = motionBlurModel;
-        profile.bloom.settings = bloomModel;
-        profile.vignette.settings = vignetteModel;
+        grainModel.intensity = effectsFadeOutCurve.Evaluate(stateTime) * grainIntensity + initialGrainIntensity;
+        vignetteModel.intensity = effectsFadeOutCurve.Evaluate(stateTime) * vignetteIntensity + initialVignetteIntensity;
 
         //Audio Pass
         spellAudio.volume = audioFadeOutCurve.Evaluate(stateTime) * volume;
+
+        profile.motionBlur.settings = motionBlurModel;
+        profile.grain.settings = grainModel;
+        profile.vignette.settings = vignetteModel;
 
         //Others
         IncreaseTime();
@@ -315,7 +315,7 @@ public class Spell01 : Spell {
         base.EndSpell();
 
         //Particles
-        mainParticles_Main.simulationSpeed = 0f;
+        mainParticles_Main.simulationSpeed = mainParticlesInitialSimulationSpeed;
         mainParticles.gameObject.SetActive(false);
 
         //Lighting
@@ -333,20 +333,8 @@ public class Spell01 : Spell {
         //Effects
         EffectsSettings();
 
-        //Audio
-        spellAudio.volume = 0f;
-        
         //Others
-        scaledSpeed = initialSpeed;
-
         spellSystem.SetActive(false);
-    }
-
-    protected override void IncreaseTime()
-    {
-        base.IncreaseTime();
-
-        scaledSpeed += scaledAcceleration;
     }
 
     #endregion

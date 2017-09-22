@@ -35,6 +35,7 @@ public abstract class Spell : MonoBehaviour {
     protected float actionTime = 0f;
     protected float recuperationTime = 0f;
     protected float stateTime = 0f;
+    protected float stateTimeComplement = 1f;
 
     //Times Lengths
     protected float anticipationLength;
@@ -61,10 +62,15 @@ public abstract class Spell : MonoBehaviour {
 
     protected void Awake()
     {
-        if (Mathf.Approximately(anticipationPercentage + actionPercentage + recuperationPercentage, 1))
+        if (!Mathf.Approximately(anticipationPercentage + actionPercentage + recuperationPercentage, 1))
             Debug.LogWarning("The sum of percentages is not equal to 1");
 
         Setup();
+    }
+
+    protected void OnDisable()
+    {
+        EffectsSettings();
     }
 
     #endregion
@@ -79,6 +85,7 @@ public abstract class Spell : MonoBehaviour {
         SetupDecal();
         SetupEffects();
         SetupAudio();
+        SetUpCamera();
         SetupOthers();
     }
 
@@ -120,9 +127,19 @@ public abstract class Spell : MonoBehaviour {
         //SetupAudio
     }
 
+    protected virtual void SetUpCamera()
+    {
+        //SetupCamera
+    }
+
     protected virtual void SetupOthers()
     {
         //SetupOthers
+    }
+
+    protected virtual void EffectsSettings()
+    {
+        //EffectsSettings
     }
 
     #endregion
@@ -160,23 +177,26 @@ public abstract class Spell : MonoBehaviour {
 
     protected virtual void SpellState1()
     {
-        Debug.Log("STATE 1");
+        //Debug.Log("STATE 1");
 
         stateTime = anticipationTime / anticipationLength;
+        stateTimeComplement = 1 - stateTime;
     }
 
     protected virtual void SpellState2()
     {
-        Debug.Log("STATE 2");
+        //Debug.Log("STATE 2");
 
         stateTime = actionTime / actionLength;
+        stateTimeComplement = 1 - stateTime;
     }
 
     protected virtual void SpellState3()
     {
-        Debug.Log("STATE 3");
+        //Debug.Log("STATE 3");
 
         stateTime = recuperationTime / recuperationLength;
+        stateTimeComplement = 1 - stateTime;
     }
 
     protected virtual void EndSpell()
@@ -193,6 +213,7 @@ public abstract class Spell : MonoBehaviour {
         actionTime = 0f;
         recuperationTime = 0f;
         stateTime = 0f;
+        stateTimeComplement = 1f;
     }
 
     protected virtual void IncreaseTime()

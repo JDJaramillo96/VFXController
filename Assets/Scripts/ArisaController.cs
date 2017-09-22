@@ -6,8 +6,13 @@ public class ArisaController : MonoBehaviour {
     #region Properties
 
     private Animator animator;
+
+    [Header("Spells")] [Space(10f)]
+
     [SerializeField]
     private Spell01 spell1;
+    [SerializeField]
+    private Spell02 spell2;
 
     #endregion
 
@@ -54,7 +59,10 @@ public class ArisaController : MonoBehaviour {
         }
         else if (Input.GetKeyUp(KeyCode.Alpha6))
         {
-            animator.SetTrigger("spell6");
+            if (!spell2.isSpellRuning)
+            {
+                spell2.ExecuteSpell();
+            }
         }
         else if (Input.GetKeyUp(KeyCode.Alpha7))
         {
