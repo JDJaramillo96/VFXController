@@ -379,9 +379,9 @@ public class Spell02 : Spell {
         vignetteModel.intensity = effectsFadeOutCurve.Evaluate(stateTime) * vignetteIntensity + initialVignetteIntensity;
 
         //Material Pass
-        arissaMaterial.SetFloat("_MainTexFactor", materialFadeInCurve.Evaluate(timeUntilHalfOfAction));
-        arissaMaterial.SetFloat("_AlphaFactor", materialFadeOutCurve.Evaluate(timeUntilHalfOfAction));
-        arissaMaterial.SetFloat("_Glossiness", materialFadeOutCurve.Evaluate(timeUntilHalfOfAction) * smoothness);
+        arissaMaterial.SetFloat("_MainTexFactor", materialFadeInCurve.Evaluate(stateTime));
+        arissaMaterial.SetFloat("_AlphaFactor", materialFadeOutCurve.Evaluate(stateTime));
+        arissaMaterial.SetFloat("_Glossiness", materialFadeOutCurve.Evaluate(stateTime) * smoothness);
 
         //Audio Pass
         spellAudio.volume = audioFadeOutCurve.Evaluate(stateTime) * volume;
