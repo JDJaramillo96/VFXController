@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.PostProcessing;
 
 public class Spell02 : Spell {
@@ -17,9 +15,9 @@ public class Spell02 : Spell {
     [SerializeField]
     private ParticleSystem mainParticles;
     [SerializeField]
-    private float mainParticlesInitialSimulationSpeed;
-    [SerializeField]
     private AnimationCurve mainParticlesSimulationSpeedCurve;
+    [SerializeField]
+    private float mainParticlesInitialSimulationSpeed = 1.25f;
     [SerializeField]
     private Gradient mainParticlesGradient;
     [SerializeField]
@@ -87,9 +85,9 @@ public class Spell02 : Spell {
     [SerializeField]
     private AnimationCurve decalFadeOutCurve;
     [SerializeField]
-    private float decalMaxSize;
+    private float decalMaxSize = 3f;
     [SerializeField]
-    private float rotationVelocity;
+    private float rotationVelocity = 550f;
     [SerializeField]
     private AnimationCurve rotationAcelerationFadeIn;
     [SerializeField]
@@ -102,11 +100,11 @@ public class Spell02 : Spell {
     [SerializeField]
     private float initialMotionBlurFrameBlending = 0.1f;
     [SerializeField]
-    private float grainIntensity = 0f;
+    private float grainIntensity = 0.15f;
     [SerializeField]
     private float initialGrainIntensity = 0f;
     [SerializeField]
-    private float initialGrainSize = 0f;
+    private float initialGrainSize = 0.5f;
     [SerializeField]
     private float vignetteIntensity = 0.45f;
     [SerializeField]
@@ -127,7 +125,7 @@ public class Spell02 : Spell {
     [SerializeField]
     private AnimationCurve audioFadeOutCurve;
     [SerializeField]
-    private float volume = 0.25f;
+    private float volume = 0.2f;
 
     //Cached Components
     private MotionBlurModel.Settings motionBlurModel;
@@ -156,6 +154,7 @@ public class Spell02 : Spell {
         mainParticles_Main = mainParticles.main;
         mainParticles_Main.simulationSpeed = mainParticlesInitialSimulationSpeed;
 
+        //Cached the main particles trail module
         ParticleSystem.TrailModule mainParticles_Trail;
         mainParticles_Trail = mainParticles.trails;
         ParticleSystem.MinMaxGradient trailColorOverLifeTime = mainParticles_Trail.colorOverLifetime;
@@ -182,6 +181,7 @@ public class Spell02 : Spell {
 
     protected override void SetupEffects()
     {
+        //Model Settings
         motionBlurModel = profile.motionBlur.settings;
         grainModel = profile.grain.settings;
         vignetteModel = profile.vignette.settings;
@@ -197,6 +197,11 @@ public class Spell02 : Spell {
     protected override void SetupAudio()
     {
         spellAudio.pitch = spellAudio.clip.length / globalLength;
+    }
+
+    protected override void SetupOthers()
+    {
+        timeUntilHalfOfAction = 0f;
     }
 
     protected override void EffectsSettings()
@@ -355,6 +360,9 @@ public class Spell02 : Spell {
 
         //Effects
         EffectsSettings();
+
+        //Audio
+        spellAudio.volume = 0f;
 
         //Others
         spellSystem.SetActive(false);

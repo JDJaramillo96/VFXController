@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.PostProcessing;
 
 public class Spell01 : Spell {
@@ -129,7 +128,7 @@ public class Spell01 : Spell {
     private float initialSpeed;
     private float scaledSpeed;
     private float scaledAcceleration;
-    private float newScale;
+    private float decalNewScale;
 
     #endregion
 
@@ -235,8 +234,8 @@ public class Spell01 : Spell {
         rim2.intensity = lightFadeInCurve.Evaluate(stateTime) * rimIntensity;
 
         //Decal Pass
-        newScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
-        decal.transform.localScale = Vector3.one * newScale;
+        decalNewScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
+        decal.transform.localScale = Vector3.one * decalNewScale;
 
         //Effects Pass
         motionBlurModel.frameBlending = effectsFadeInCurve.Evaluate(stateTime) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
@@ -266,8 +265,8 @@ public class Spell01 : Spell {
         mainParticles_Main.simulationSpeed = mainParticlesSimulationSpeedCurve.Evaluate(stateTime) * scaledSpeed;
 
         //Decal Pass
-        newScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
-        decal.transform.localScale = Vector3.one * newScale;
+        decalNewScale = decalFadeInCurve.Evaluate(globalTime / lengthUntilHalfOfAction) * decalMaxSize;
+        decal.transform.localScale = Vector3.one * decalNewScale;
 
         //Others
         IncreaseTime();
@@ -290,8 +289,8 @@ public class Spell01 : Spell {
         rim2.intensity = lightFadeOutCurve.Evaluate(stateTime) * rimIntensity;
 
         //Decal Pass
-        newScale = decalFadeOutCurve.Evaluate(stateTime) * decalMaxSize;
-        decal.transform.localScale = Vector3.one * newScale;
+        decalNewScale = decalFadeOutCurve.Evaluate(stateTime) * decalMaxSize;
+        decal.transform.localScale = Vector3.one * decalNewScale;
 
         //Effects Pass
         motionBlurModel.frameBlending = effectsFadeOutCurve.Evaluate(recuperationTime / (recuperationLength - frameBlendingDelta)) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
