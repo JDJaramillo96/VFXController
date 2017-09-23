@@ -22,6 +22,8 @@ public class Spell02 : Spell {
     private AnimationCurve mainParticlesSimulationSpeedCurve;
     [SerializeField]
     private Gradient mainParticlesGradient;
+    [SerializeField]
+    private Gradient mainParticlesTrailGradient;
 
     //Cached Modules
     private ParticleSystem.MainModule mainParticles_Main;
@@ -30,6 +32,14 @@ public class Spell02 : Spell {
 
     [SerializeField]
     private ParticleSystem bodyParticles;
+    [SerializeField]
+    private float bodyParticlesSize = 0.5f;
+    [SerializeField]
+    private float bodyParticlesInitialSize = 0.25f;
+    [SerializeField]
+    private AnimationCurve bodyParticlesFadeInCurve;
+    [SerializeField]
+    private AnimationCurve bodyParticlesFadeOutCurve;
     [SerializeField]
     private Gradient bodyParticlesGradient;
 
@@ -146,7 +156,17 @@ public class Spell02 : Spell {
         mainParticles_Main = mainParticles.main;
         mainParticles_Main.simulationSpeed = mainParticlesInitialSimulationSpeed;
 
+        ParticleSystem.TrailModule mainParticles_Trail;
+        mainParticles_Trail = mainParticles.trails;
+        ParticleSystem.MinMaxGradient trailColorOverLifeTime = mainParticles_Trail.colorOverLifetime;
+        trailColorOverLifeTime.gradient = mainParticlesTrailGradient;
+        mainParticles_Trail.colorOverLifetime = trailColorOverLifeTime;
+
+        //Body Particles
         bodyParticles_Main = bodyParticles.main;
+        bodyParticles_Main.startSize = bodyParticlesInitialSize;
+
+        bodyParticlesSize -= bodyParticlesInitialSize;
     }
 
     protected override void SetupLighting()
@@ -223,6 +243,7 @@ public class Spell02 : Spell {
         mainParticles_Main.simulationSpeed = mainParticlesInitialSimulationSpeed + (mainParticlesSimulationSpeedCurve.Evaluate(stateTime));
 
         bodyParticles_Main.startColor = bodyParticlesGradient.Evaluate(stateTime);
+        bodyParticles_Main.startSize = bodyParticlesFadeInCurve.Evaluate(stateTime) * bodyParticlesSize + bodyParticlesInitialSize;
 
         //Lighting Pass
         fill.color = fillGradient.Evaluate(stateTime);
@@ -264,6 +285,7 @@ public class Spell02 : Spell {
 
         //Particles Pass
         mainParticles_Main.startColor = mainParticlesGradient.Evaluate(timeUntilHalfOfAction);
+        bodyParticles_Main.startSize = bodyParticlesFadeOutCurve.Evaluate(stateTime) * bodyParticlesSize + bodyParticlesInitialSize;
 
         //Decal Pass
         decal.transform.localScale = Vector3.one * (decalFadeInCurve.Evaluate(timeUntilHalfOfAction) * decalMaxSize);
@@ -317,6 +339,7 @@ public class Spell02 : Spell {
         //Particles
         mainParticles_Main.simulationSpeed = mainParticlesInitialSimulationSpeed;
         mainParticles.gameObject.SetActive(false);
+        bodyParticles_Main.startSize = bodyParticlesInitialSize;
 
         //Lighting
         fill.color = initialFillColor;

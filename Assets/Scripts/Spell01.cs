@@ -38,7 +38,7 @@ public class Spell01 : Spell {
     [SerializeField]
     private ParticleSystem bodyParticles;
     [SerializeField]
-    private float bodyParticlesSize = 0.25f;
+    private float bodyParticlesInitialSize = 0.25f;
     [SerializeField]
     private Gradient bodyParticlesGradient;
 
@@ -155,7 +155,7 @@ public class Spell01 : Spell {
 
         //Body Particles
         bodyParticles_Main = bodyParticles.main;
-        bodyParticles_Main.startSize = bodyParticlesSize;
+        bodyParticles_Main.startSize = bodyParticlesInitialSize;
     }
 
     protected override void SetupLighting()
