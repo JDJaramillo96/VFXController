@@ -116,6 +116,28 @@ public class Spell02 : Spell {
     [SerializeField] [Range(0, 1)]
     private float frameBlendingDelta = 0.25f;
 
+    //Cached Components
+    private MotionBlurModel.Settings motionBlurModel;
+    private GrainModel.Settings grainModel;
+    private VignetteModel.Settings vignetteModel;
+
+    [Space(10f)]
+    [Header("Material Settings")]
+
+    [SerializeField]
+    private Material arissaMaterial;
+    [SerializeField]
+    private float smoothness = 0.5f;
+    [SerializeField]
+    private AnimationCurve materialFadeInCurve;
+    [SerializeField]
+    private AnimationCurve materialFadeOutCurve;
+
+    //Initial values
+    private float initialAlbedoFactor;
+    private float initialAlphaFactor;
+    private float initialSmoothness;
+
     [Space(10f)] [Header("Audio Settings")]
 
     [SerializeField]
@@ -127,13 +149,19 @@ public class Spell02 : Spell {
     [SerializeField]
     private float volume = 0.2f;
 
-    //Cached Components
-    private MotionBlurModel.Settings motionBlurModel;
-    private GrainModel.Settings grainModel;
-    private VignetteModel.Settings vignetteModel;
-
     //Timming Settings
     private float timeUntilHalfOfAction;
+
+    #endregion
+
+    #region Unity Functions
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+
+        MaterialSettings();
+    }
 
     #endregion
 
@@ -194,6 +222,13 @@ public class Spell02 : Spell {
         vignetteIntensity -= initialVignetteIntensity;
     }
 
+    protected override void SetupMaterials()
+    {
+        initialAlbedoFactor = arissaMaterial.GetFloat("_MainTexFactor");
+        initialAlphaFactor = arissaMaterial.GetFloat("_AlphaFactor");
+        initialSmoothness = arissaMaterial.GetFloat("_Glossiness");
+    }
+
     protected override void SetupAudio()
     {
         spellAudio.pitch = spellAudio.clip.length / globalLength;
@@ -218,6 +253,13 @@ public class Spell02 : Spell {
         profile.vignette.settings = vignetteModel;
 
         profile.grain.enabled = false;
+    }
+
+    private void MaterialSettings()
+    {
+        arissaMaterial.SetFloat("_MainTexFactor", initialAlbedoFactor);
+        arissaMaterial.SetFloat("_AlphaFactor", initialAlphaFactor);
+        arissaMaterial.SetFloat("_Glossiness", initialSmoothness);
     }
 
     #endregion
@@ -275,6 +317,11 @@ public class Spell02 : Spell {
         profile.grain.settings = grainModel;
         profile.vignette.settings = vignetteModel;
 
+        //Material Pass
+        arissaMaterial.SetFloat("_MainTexFactor", materialFadeOutCurve.Evaluate(timeUntilHalfOfAction));
+        arissaMaterial.SetFloat("_AlphaFactor", materialFadeInCurve.Evaluate(timeUntilHalfOfAction));
+        arissaMaterial.SetFloat("_Glossiness", materialFadeInCurve.Evaluate(timeUntilHalfOfAction) * smoothness);
+
         //Audio Pass
         spellAudio.volume = audioFadeInCurve.Evaluate(stateTime) * volume;
 
@@ -295,6 +342,11 @@ public class Spell02 : Spell {
         //Decal Pass
         decal.transform.localScale = Vector3.one * (decalFadeInCurve.Evaluate(timeUntilHalfOfAction) * decalMaxSize);
         decal.transform.Rotate(Vector3.up * (rotationVelocity * rotationAcelerationFadeIn.Evaluate(timeUntilHalfOfAction) * Time.deltaTime), Space.World);
+
+        //Material Pass
+        arissaMaterial.SetFloat("_MainTexFactor", materialFadeOutCurve.Evaluate(timeUntilHalfOfAction));
+        arissaMaterial.SetFloat("_AlphaFactor", materialFadeInCurve.Evaluate(timeUntilHalfOfAction));
+        arissaMaterial.SetFloat("_Glossiness", materialFadeInCurve.Evaluate(timeUntilHalfOfAction) * smoothness);
 
         //Others
         IncreaseTime();
@@ -325,6 +377,11 @@ public class Spell02 : Spell {
         motionBlurModel.frameBlending = effectsFadeOutCurve.Evaluate(recuperationTime / (recuperationLength - frameBlendingDelta)) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
         grainModel.intensity = effectsFadeOutCurve.Evaluate(stateTime) * grainIntensity + initialGrainIntensity;
         vignetteModel.intensity = effectsFadeOutCurve.Evaluate(stateTime) * vignetteIntensity + initialVignetteIntensity;
+
+        //Material Pass
+        arissaMaterial.SetFloat("_MainTexFactor", materialFadeInCurve.Evaluate(timeUntilHalfOfAction));
+        arissaMaterial.SetFloat("_AlphaFactor", materialFadeOutCurve.Evaluate(timeUntilHalfOfAction));
+        arissaMaterial.SetFloat("_Glossiness", materialFadeOutCurve.Evaluate(timeUntilHalfOfAction) * smoothness);
 
         //Audio Pass
         spellAudio.volume = audioFadeOutCurve.Evaluate(stateTime) * volume;

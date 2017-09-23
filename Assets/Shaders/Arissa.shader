@@ -1,4 +1,4 @@
-﻿Shader "Custom/Surface/Arissa"
+﻿Shader "Custom/Arissa"
 {	
 	Properties
 	{

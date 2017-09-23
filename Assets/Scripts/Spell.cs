@@ -68,7 +68,7 @@ public abstract class Spell : MonoBehaviour {
         Setup();
     }
 
-    protected void OnDisable()
+    protected virtual void OnDisable()
     {
         EffectsSettings();
     }
@@ -84,8 +84,9 @@ public abstract class Spell : MonoBehaviour {
         SetupLighting();
         SetupDecal();
         SetupEffects();
+        SetupCamera();
+        SetupMaterials();
         SetupAudio();
-        SetUpCamera();
         SetupOthers();
     }
 
@@ -122,14 +123,19 @@ public abstract class Spell : MonoBehaviour {
         //SetupImageEffects
     }
 
+    protected virtual void SetupCamera()
+    {
+        //SetupCamera
+    }
+
+    protected virtual void SetupMaterials()
+    {
+        //SetupMaterials
+    }
+
     protected virtual void SetupAudio()
     {
         //SetupAudio
-    }
-
-    protected virtual void SetUpCamera()
-    {
-        //SetupCamera
     }
 
     protected virtual void SetupOthers()
