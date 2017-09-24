@@ -135,7 +135,7 @@ public class Spell02 : Spell {
 
     //Initial values
     private float initialAlbedoFactor;
-    private float initialAlphaFactor;
+    private float initialBorderFactor;
     private float initialSmoothness;
 
     [Space(10f)] [Header("Audio Settings")]
@@ -225,7 +225,7 @@ public class Spell02 : Spell {
     protected override void SetupMaterials()
     {
         initialAlbedoFactor = arissaMaterial.GetFloat("_MainTexFactor");
-        initialAlphaFactor = arissaMaterial.GetFloat("_AlphaFactor");
+        initialBorderFactor = arissaMaterial.GetFloat("_BorderFactor");
         initialSmoothness = arissaMaterial.GetFloat("_Glossiness");
     }
 
@@ -258,7 +258,7 @@ public class Spell02 : Spell {
     private void MaterialSettings()
     {
         arissaMaterial.SetFloat("_MainTexFactor", initialAlbedoFactor);
-        arissaMaterial.SetFloat("_AlphaFactor", initialAlphaFactor);
+        arissaMaterial.SetFloat("_BorderFactor", initialBorderFactor);
         arissaMaterial.SetFloat("_Glossiness", initialSmoothness);
     }
 
@@ -309,9 +309,9 @@ public class Spell02 : Spell {
         if (!profile.grain.enabled)
             profile.grain.enabled = true;
 
-        motionBlurModel.frameBlending = effectsFadeInCurve.Evaluate(stateTime) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
-        grainModel.intensity = effectsFadeInCurve.Evaluate(stateTime) * grainIntensity + initialGrainIntensity;
-        vignetteModel.intensity = effectsFadeInCurve.Evaluate(stateTime) * vignetteIntensity + initialVignetteIntensity;
+        motionBlurModel.frameBlending = Mathf.Clamp01(effectsFadeInCurve.Evaluate(stateTime) * motionBlurFrameBlending + initialMotionBlurFrameBlending);
+        grainModel.intensity = Mathf.Clamp01(effectsFadeInCurve.Evaluate(stateTime) * grainIntensity + initialGrainIntensity);
+        vignetteModel.intensity = Mathf.Clamp01(effectsFadeInCurve.Evaluate(stateTime) * vignetteIntensity + initialVignetteIntensity);
 
         profile.motionBlur.settings = motionBlurModel;
         profile.grain.settings = grainModel;
@@ -319,7 +319,7 @@ public class Spell02 : Spell {
 
         //Material Pass
         arissaMaterial.SetFloat("_MainTexFactor", materialFadeOutCurve.Evaluate(timeUntilHalfOfAction));
-        arissaMaterial.SetFloat("_AlphaFactor", materialFadeInCurve.Evaluate(timeUntilHalfOfAction));
+        arissaMaterial.SetFloat("_BorderFactor", materialFadeInCurve.Evaluate(timeUntilHalfOfAction));
         arissaMaterial.SetFloat("_Glossiness", materialFadeInCurve.Evaluate(timeUntilHalfOfAction) * smoothness);
 
         //Audio Pass
@@ -345,7 +345,7 @@ public class Spell02 : Spell {
 
         //Material Pass
         arissaMaterial.SetFloat("_MainTexFactor", materialFadeOutCurve.Evaluate(timeUntilHalfOfAction));
-        arissaMaterial.SetFloat("_AlphaFactor", materialFadeInCurve.Evaluate(timeUntilHalfOfAction));
+        arissaMaterial.SetFloat("_BorderFactor", materialFadeInCurve.Evaluate(timeUntilHalfOfAction));
         arissaMaterial.SetFloat("_Glossiness", materialFadeInCurve.Evaluate(timeUntilHalfOfAction) * smoothness);
 
         //Others
@@ -374,13 +374,13 @@ public class Spell02 : Spell {
         decal.transform.Rotate(Vector3.up * (rotationVelocity * rotationAcelerationFadeOut.Evaluate(stateTime) * Time.deltaTime), Space.World);
 
         //Effects Pass
-        motionBlurModel.frameBlending = effectsFadeOutCurve.Evaluate(recuperationTime / (recuperationLength - frameBlendingDelta)) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
-        grainModel.intensity = effectsFadeOutCurve.Evaluate(stateTime) * grainIntensity + initialGrainIntensity;
-        vignetteModel.intensity = effectsFadeOutCurve.Evaluate(stateTime) * vignetteIntensity + initialVignetteIntensity;
+        motionBlurModel.frameBlending = Mathf.Clamp01(effectsFadeOutCurve.Evaluate(recuperationTime / (recuperationLength - frameBlendingDelta)) * motionBlurFrameBlending + initialMotionBlurFrameBlending);
+        grainModel.intensity = Mathf.Clamp01(effectsFadeOutCurve.Evaluate(stateTime) * grainIntensity + initialGrainIntensity);
+        vignetteModel.intensity = Mathf.Clamp01(effectsFadeOutCurve.Evaluate(stateTime) * vignetteIntensity + initialVignetteIntensity);
 
         //Material Pass
         arissaMaterial.SetFloat("_MainTexFactor", materialFadeInCurve.Evaluate(stateTime));
-        arissaMaterial.SetFloat("_AlphaFactor", materialFadeOutCurve.Evaluate(stateTime));
+        arissaMaterial.SetFloat("_BorderFactor", materialFadeOutCurve.Evaluate(stateTime));
         arissaMaterial.SetFloat("_Glossiness", materialFadeOutCurve.Evaluate(stateTime) * smoothness);
 
         //Audio Pass
@@ -417,6 +417,9 @@ public class Spell02 : Spell {
 
         //Effects
         EffectsSettings();
+
+        //Material
+        MaterialSettings();
 
         //Audio
         spellAudio.volume = 0f;

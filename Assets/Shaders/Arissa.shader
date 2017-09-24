@@ -2,17 +2,34 @@
 {	
 	Properties
 	{
-		_MainTex ("Albedo (RGB)", 2D) = "white" {}
+		_MainTex("Albedo (RGB)", 2D) = "white" {}
+		_MainTexFactor("Albedo Factor", Range(0,1)) = 1.0
+		
+		[Space()][Space()]
+
 		[Normal]
-		_Normal ("Normal", 2D) = "bump" {}
-		_NormalStrength ("Normal Strength", Range (0,2)) = 1.0
-		_MainTexFactor ("Albedo Factor", Range(0,1)) = 1.0
-		_AlphaFactor ("Alpha Factor", Range(0,1)) = 0.0
-		_BorderFactor ("Border Factor", Range(0.1,1)) = 1.0
-		_Glossiness ("Smoothness", Range(0,1)) = 0.0
-		_Metallic ("Metallic", Range(0,1)) = 0.0
-		_ComplementColor ("Complement Color", Color) = (1,1,1,1) //White
-		_Color ("Color", Color) = (1,1,1,1) //White
+		_NormalMap("Normal map", 2D) = "bump" {}
+		_NormalStrength("Strength", Range (0,2)) = 1.0
+		
+		[Space()][Space()]
+
+		_OcclusionMap("Occlusion map", 2D) = "white" {}
+		_OcclusionStrength("Strength", Range(0,1)) = 1.0
+
+		[Space()][Space()]
+
+		_Border("Border", Range(0,1)) = 1.0
+		_BorderFactor("Border Factor", Range(0,1)) = 0.0
+
+		[Space()][Space()]
+
+		_Glossiness("Smoothness", Range(0,1)) = 0.0
+		_Metallic("Metallic", Range(0,1)) = 0.0
+
+		[Space()][Space()]
+
+		_ComplementColor("Complement Color", Color) = (0,0,0,1) //Black
+		_Color("Color", Color) = (1,1,1,1) //White
 	}
 
 	SubShader
@@ -23,8 +40,6 @@
 			"IgnoreProjector" = "True"
 			"RenderType" = "Transparent"
 		}
-		
-		LOD 200
 
 		//Extra pass
 		Pass
@@ -34,7 +49,7 @@
 		}
 
 		Cull Back
-		
+
 		LOD 200
 		
 		CGPROGRAM
@@ -45,10 +60,12 @@
 		// --- PROPERTIES!
 
 		sampler2D _MainTex;
-		sampler2D _Normal;
-		half _NormalStrength;
 		half _MainTexFactor;
-		half _AlphaFactor;
+		sampler2D _NormalMap;
+		half _NormalStrength;
+		sampler2D _OcclusionMap;
+		half _OcclusionStrength;
+		half _Border;
 		half _BorderFactor;
 		half _Glossiness;
 		half _Metallic;
@@ -70,29 +87,32 @@
 		{
 			//Textures info
 			float4 texInfo = tex2D (_MainTex, IN.uv_MainTex);
-			float4 normalInfo = tex2D (_Normal, IN.uv_MainTex);
+			float4 normalInfo = tex2D (_NormalMap, IN.uv_MainTex);
+			float4 occlusionInfo = tex2D(_OcclusionMap, IN.uv_MainTex);
 			//Normal setup
 			float3 normal = UnpackNormal (normalInfo).rgb;
 			normal.rg *= _NormalStrength;
 			//Color setup
-			float4 color1 = texInfo * _MainTexFactor;
-			float4 color2 = _ComplementColor * (1 - _MainTexFactor);
+			float3 color1 = texInfo.rgb * _MainTexFactor;
+			float3 color2 = _ComplementColor.rgb * (1 - _MainTexFactor);
 			//Output
-			output.Albedo = (color1 + color2) * _Color;
+			output.Albedo = (color1 + color2) * _Color.rgb;
+			output.Occlusion = occlusionInfo.r * _OcclusionStrength;
 			output.Metallic = _Metallic;
 			output.Smoothness = _Glossiness;
-			output.Normal = normalize(normal);
+			output.Normal = normalize(normal);			
 
-			//Normal setup
+			//Normal vector based on per pixel normal map
 			float3 perPixelNormalMap = WorldNormalVector(IN, output.Normal);
 			//Dot product between face normal and view direction
-			float dotProduct = abs(dot(perPixelNormalMap, IN.viewDir));
-			float customBorder = dotProduct / _BorderFactor;
+			half dotProduct = abs(dot(perPixelNormalMap, IN.viewDir));
+			half customBorder = dotProduct / _Border;
+			customBorder = clamp(customBorder, 0, 1);
 			//Alpha setup
-			float alpha1 = customBorder * _AlphaFactor;
-			float alpha2 = 1 - _AlphaFactor;
-			//Output
-			output.Alpha = alpha1 + alpha2;
+			half alpha1 = customBorder * _BorderFactor;
+			half alpha2 = 1 - _BorderFactor;
+			//Output alpha
+			output.Alpha = (alpha1 + alpha2) * _Color.a;
 		}
 
 		ENDCG

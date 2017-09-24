@@ -154,6 +154,9 @@ public abstract class Spell : MonoBehaviour {
 
     public void SetGlobalLength(float globalLength)
     {
+        if (isSpellRuning)
+            return;
+
         this.globalLength = globalLength;
 
         Setup();

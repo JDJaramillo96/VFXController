@@ -238,10 +238,10 @@ public class Spell01 : Spell {
         decal.transform.localScale = Vector3.one * decalNewScale;
 
         //Effects Pass
-        motionBlurModel.frameBlending = effectsFadeInCurve.Evaluate(stateTime) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
-        bloomModel.bloom.intensity = effectsFadeInCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity;
-        bloomModel.bloom.threshold = inverseFadeInCurve.Evaluate(stateTime) * initialBloomThreshold;
-        vignetteModel.intensity = inverseFadeInCurve.Evaluate(stateTime) * initialVignetteIntensity;
+        motionBlurModel.frameBlending = Mathf.Clamp01(effectsFadeInCurve.Evaluate(stateTime) * motionBlurFrameBlending + initialMotionBlurFrameBlending);
+        bloomModel.bloom.intensity = Mathf.Clamp01(effectsFadeInCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity);
+        bloomModel.bloom.threshold = Mathf.Clamp01(inverseFadeInCurve.Evaluate(stateTime) * initialBloomThreshold);
+        vignetteModel.intensity = Mathf.Clamp01(inverseFadeInCurve.Evaluate(stateTime) * initialVignetteIntensity);
 
         profile.motionBlur.settings = motionBlurModel;
         profile.bloom.settings = bloomModel;
@@ -293,10 +293,10 @@ public class Spell01 : Spell {
         decal.transform.localScale = Vector3.one * decalNewScale;
 
         //Effects Pass
-        motionBlurModel.frameBlending = effectsFadeOutCurve.Evaluate(recuperationTime / (recuperationLength - frameBlendingDelta)) * motionBlurFrameBlending + initialMotionBlurFrameBlending;
-        bloomModel.bloom.intensity = effectsFadeOutCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity;
-        bloomModel.bloom.threshold = inverseFadeOutCurve.Evaluate(stateTime) * initialBloomThreshold;
-        vignetteModel.intensity = inverseFadeOutCurve.Evaluate(stateTime) * initialVignetteIntensity;
+        motionBlurModel.frameBlending = Mathf.Clamp01(effectsFadeOutCurve.Evaluate(recuperationTime / (recuperationLength - frameBlendingDelta)) * motionBlurFrameBlending + initialMotionBlurFrameBlending);
+        bloomModel.bloom.intensity = Mathf.Clamp01(effectsFadeOutCurve.Evaluate(stateTime) * bloomIntensity + initialBloomIntensity);
+        bloomModel.bloom.threshold = Mathf.Clamp01(inverseFadeOutCurve.Evaluate(stateTime) * initialBloomThreshold);
+        vignetteModel.intensity = Mathf.Clamp01(inverseFadeOutCurve.Evaluate(stateTime) * initialVignetteIntensity);
 
         profile.motionBlur.settings = motionBlurModel;
         profile.bloom.settings = bloomModel;

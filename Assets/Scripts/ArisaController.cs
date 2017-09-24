@@ -36,7 +36,7 @@ public class ArisaController : MonoBehaviour {
     {
         if (Input.GetKeyUp(KeyCode.Alpha1))
         {
-            if (!spell1.isSpellRuning)
+            if (!CheckSpells())
             {
                 spell1.ExecuteSpell();
             }
@@ -59,7 +59,7 @@ public class ArisaController : MonoBehaviour {
         }
         else if (Input.GetKeyUp(KeyCode.Alpha6))
         {
-            if (!spell2.isSpellRuning)
+            if (!CheckSpells())
             {
                 spell2.ExecuteSpell();
             }
@@ -88,6 +88,16 @@ public class ArisaController : MonoBehaviour {
         {
             animator.SetTrigger("spell12");
         }
+    }
+
+    private bool CheckSpells()
+    {
+        if (spell1.isSpellRuning)
+            return true;
+        else if (spell2.isSpellRuning)
+            return true;
+        else
+            return false;
     }
 
     #endregion
