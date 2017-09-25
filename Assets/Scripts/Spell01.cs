@@ -108,6 +108,11 @@ public class Spell01 : Spell {
     [SerializeField] [Range(0,1)]
     private float frameBlendingDelta = 0.25f;
 
+    //Temp
+
+    float motionBlurFrameBlendingTemp;
+    float bloomIntensityTemp;
+
     //Cached Components
     private MotionBlurModel.Settings motionBlurModel;
     private BloomModel.Settings bloomModel;
@@ -136,9 +141,10 @@ public class Spell01 : Spell {
 
     protected override void SetupLengths()
     {
-        base.SetupLengths();
+        if (clipLength != 2.267f)
+            clipLength = 2.267f;
 
-        clipLength = 2.267f;
+        base.SetupLengths();
     }
 
     protected override void SetupParticles()
@@ -171,7 +177,7 @@ public class Spell01 : Spell {
         bloomModel = profile.bloom.settings;
         vignetteModel = profile.vignette.settings;
 
-        EffectsSettings();
+        InitialEffectsSettings();
 
         //Parameters Compensation
         motionBlurFrameBlending -= initialMotionBlurFrameBlending;
@@ -180,7 +186,7 @@ public class Spell01 : Spell {
 
     protected override void SetupAudio()
     {
-        spellAudio.pitch = spellAudio.clip.length / globalLength;
+        spellAudio.pitch = spellAudio.clip.length / Mathf.Clamp(globalLength, 0.0001f, 1f);
     }
 
     protected override void SetupOthers()
@@ -190,7 +196,7 @@ public class Spell01 : Spell {
         initialSpeed = scaledSpeed;
     }
 
-    protected override void EffectsSettings()
+    protected override void InitialEffectsSettings()
     {
         //Initial Parameters
         motionBlurModel.frameBlending = initialMotionBlurFrameBlending;
@@ -202,6 +208,18 @@ public class Spell01 : Spell {
         profile.motionBlur.settings = motionBlurModel;
         profile.bloom.settings = bloomModel;
         profile.vignette.settings = vignetteModel;
+    }
+
+    protected override void SetTempProperties()
+    {
+        motionBlurFrameBlendingTemp = motionBlurFrameBlending;
+        bloomIntensityTemp = bloomIntensity;
+    }
+
+    protected override void ResetTempProperties()
+    {
+        motionBlurFrameBlending = motionBlurFrameBlendingTemp;
+        bloomIntensity = bloomIntensityTemp;
     }
 
     #endregion
@@ -330,7 +348,7 @@ public class Spell01 : Spell {
         decal.transform.localScale = Vector3.zero;
 
         //Effects
-        EffectsSettings();
+        InitialEffectsSettings();
 
         //Audio
         spellAudio.volume = 0f;

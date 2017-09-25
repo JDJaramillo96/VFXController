@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Animator))]
 public class ArisaController : MonoBehaviour {
@@ -14,6 +15,9 @@ public class ArisaController : MonoBehaviour {
     [SerializeField]
     private Spell02 spell2;
 
+    //Hidden
+    private Slider slider;
+
     #endregion
 
     #region Unity Functions
@@ -21,6 +25,13 @@ public class ArisaController : MonoBehaviour {
     private void Awake()
     {
         animator = GetComponent<Animator>();
+        slider = GameObject.FindGameObjectWithTag("Slider").GetComponent<Slider>();
+    }
+
+    private void Start()
+    {
+        spell1.SetGlobalLength(slider.value);
+        spell2.SetGlobalLength(slider.value);
     }
 
     private void Update()
@@ -34,9 +45,12 @@ public class ArisaController : MonoBehaviour {
 
     private void InputModule()
     {
+        slider.interactable = !IsSpellActive() ? true : false;
+
+        //Spell inputs
         if (Input.GetKeyUp(KeyCode.Alpha1))
         {
-            if (!CheckSpells())
+            if (!IsSpellActive())
             {
                 spell1.ExecuteSpell();
             }
@@ -59,7 +73,7 @@ public class ArisaController : MonoBehaviour {
         }
         else if (Input.GetKeyUp(KeyCode.Alpha6))
         {
-            if (!CheckSpells())
+            if (!IsSpellActive())
             {
                 spell2.ExecuteSpell();
             }
@@ -90,7 +104,7 @@ public class ArisaController : MonoBehaviour {
         }
     }
 
-    private bool CheckSpells()
+    private bool IsSpellActive()
     {
         if (spell1.isSpellRuning)
             return true;

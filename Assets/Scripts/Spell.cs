@@ -6,7 +6,10 @@ public abstract class Spell : MonoBehaviour {
 
     #region Properties
 
-    public float globalLength;
+    public float globalLength
+    {
+        get; private set;
+    }
 
     [Space(10f)] [Header("Animator Settings")]
 
@@ -50,9 +53,15 @@ public abstract class Spell : MonoBehaviour {
 
     //Hidden
     [HideInInspector]
-    public int state = 0;
+    public int state
+    {
+        get; protected set;
+    }
     [HideInInspector]
-    public bool isSpellRuning = false;
+    public bool isSpellRuning
+    {
+        get; protected set;
+    }
 
     protected float clipLength;
 
@@ -65,12 +74,15 @@ public abstract class Spell : MonoBehaviour {
         if (!Mathf.Approximately(anticipationPercentage + actionPercentage + recuperationPercentage, 1))
             Debug.LogWarning("The sum of percentages is not equal to 1");
 
+        SetTempProperties();
+
         Setup();
     }
 
-    protected virtual void OnDisable()
+    protected void OnDisable()
     {
-        EffectsSettings();
+        InitialEffectsSettings();
+        InitialMaterialSettings();
     }
 
     #endregion
@@ -143,9 +155,24 @@ public abstract class Spell : MonoBehaviour {
         //SetupOthers
     }
 
-    protected virtual void EffectsSettings()
+    protected virtual void InitialEffectsSettings()
     {
         //EffectsSettings
+    }
+
+    protected virtual void InitialMaterialSettings()
+    {
+        //MaterialSettings
+    }
+
+    protected virtual void SetTempProperties()
+    {
+        //SetTempProperties
+    }
+
+    protected virtual void ResetTempProperties()
+    {
+        //GetTempProperties
     }
 
     #endregion
@@ -156,6 +183,8 @@ public abstract class Spell : MonoBehaviour {
     {
         if (isSpellRuning)
             return;
+
+        ResetTempProperties();
 
         this.globalLength = globalLength;
 
