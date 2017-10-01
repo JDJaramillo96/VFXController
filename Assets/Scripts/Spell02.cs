@@ -178,7 +178,7 @@ public class Spell02 : Spell {
     protected override void SetupParticles()
     {
         //Main Particles
-        mainParticlesInitialSimulationSpeed *= (clipLength / globalLength);
+        mainParticlesInitialSimulationSpeed *= (clipLength / spellSpeed);
 
         mainParticles_Main = mainParticles.main;
         mainParticles_Main.simulationSpeed = mainParticlesInitialSimulationSpeed;
@@ -232,7 +232,7 @@ public class Spell02 : Spell {
 
     protected override void SetupAudio()
     {
-        spellAudio.pitch = spellAudio.clip.length / Mathf.Clamp(globalLength, 0.0001f, 1f);
+        spellAudio.pitch = spellAudio.clip.length / Mathf.Clamp(spellSpeed, 0.0001f, 1f);
     }
 
     protected override void InitialEffectsSettings()

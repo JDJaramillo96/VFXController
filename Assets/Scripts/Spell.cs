@@ -6,9 +6,9 @@ public abstract class Spell : MonoBehaviour {
 
     #region Properties
 
-    public float globalLength
+    public float spellSpeed
     {
-        get; private set;
+        get; protected set;
     }
 
     [Space(10f)] [Header("Animator Settings")]
@@ -105,9 +105,9 @@ public abstract class Spell : MonoBehaviour {
     protected virtual void SetupLengths()
     {
         //States Length
-        anticipationLength = (globalLength * anticipationPercentage);
-        actionLength = (globalLength * actionPercentage);
-        recuperationLength = (globalLength * recuperationPercentage);
+        anticipationLength = (spellSpeed * anticipationPercentage);
+        actionLength = (spellSpeed * actionPercentage);
+        recuperationLength = (spellSpeed * recuperationPercentage);
 
         //Lengths Until
         lengthUntilAction = anticipationLength + actionLength;
@@ -179,14 +179,14 @@ public abstract class Spell : MonoBehaviour {
 
     #region Spell Functions
 
-    public void SetGlobalLength(float globalLength)
+    public void SetGlobalLength(float spellSpeed)
     {
         if (isSpellRuning)
             return;
 
         ResetTempProperties();
 
-        this.globalLength = globalLength;
+        this.spellSpeed = spellSpeed;
 
         Setup();
     }
@@ -209,7 +209,7 @@ public abstract class Spell : MonoBehaviour {
         isSpellRuning = true;
 
         //Animator
-        animator.speed = clipLength / globalLength;
+        animator.speed = clipLength / spellSpeed;
         state = 1;
     }
 
@@ -322,6 +322,8 @@ public abstract class Spell : MonoBehaviour {
 
             yield return null;
         }
+
+        StopCoroutine(spellCoroutine);
     }
 
     #endregion

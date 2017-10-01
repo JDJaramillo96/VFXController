@@ -186,13 +186,13 @@ public class Spell01 : Spell {
 
     protected override void SetupAudio()
     {
-        spellAudio.pitch = spellAudio.clip.length / Mathf.Clamp(globalLength, 0.0001f, 1f);
+        spellAudio.pitch = spellAudio.clip.length / Mathf.Clamp(spellSpeed, 0.0001f, 1f);
     }
 
     protected override void SetupOthers()
     {
-        scaledSpeed = mainParticlesSpeed * (clipLength / globalLength);
-        scaledAcceleration = mainParticlesAcceleration * (clipLength / globalLength);
+        scaledSpeed = mainParticlesSpeed * (clipLength / spellSpeed);
+        scaledAcceleration = mainParticlesAcceleration * (clipLength / spellSpeed);
         initialSpeed = scaledSpeed;
     }
 
